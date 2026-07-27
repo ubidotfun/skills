@@ -16,4 +16,4 @@ Then prompt the agent plainly, e.g. "Use ubi: buy $25 of the top new coin and se
 | `ubi-trading` | Discover, quote, swap, referrer earnings, holder income |
 | `ubi-launch` | Metadata upload and one-transaction launches |
 
-The skills drive the hosted MCP server at `https://api.ubi.fun/mcp` (Streamable HTTP, no API key). It never holds keys: `prepare_*` tools return unsigned calldata for the agent's own wallet tooling. Full integrator docs: https://ubi.fun/docs/integrate.
+The skills drive the hosted MCP server at `https://api.ubi.fun/mcp` (Streamable HTTP, no API key). It never requests or uses wallet keys: `prepare_*` tools return unsigned calldata for the agent's own wallet tooling. Full integrator docs: https://ubi.fun/docs/integrate.
