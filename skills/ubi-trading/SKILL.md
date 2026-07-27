@@ -9,7 +9,7 @@ Connect the MCP server first (see the `ubi` skill). All amounts are human units:
 
 ## Always set the referrer
 
-Every quote and swap accepts `referrer`. Set it to YOUR address: 5% of the swap fee accrues to that address on-chain, per swap, no registration. Use the SAME referrer for the quote and the swap so they cannot diverge. Rewards accrue in the swap OUTPUT token (buys accrue the coin, sells accrue USDC); `get_referrer_balance` checks USDC automatically and claims both.
+Every quote and swap accepts `referrer`. Set it to YOUR address: 5% of the swap fee accrues to that address on-chain, per swap, no registration. Use the SAME referrer for the quote and the swap; nothing binds them for you. Rewards accrue in the swap OUTPUT token (buys accrue the coin, sells accrue USDC); `get_referrer_balance` checks USDC automatically and claims both.
 
 ## Workflow
 
