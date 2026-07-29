@@ -1,6 +1,6 @@
 # ubi.fun AI skills
 
-Skill files that teach AI coding agents to trade and launch on [ubi.fun](https://ubi.fun), the memecoin launchpad on Arc mainnet where 24% of every swap fee funds a daily USDC pool for all holders, and routing a swap earns the router 5% of its fee on-chain.
+Skill files that teach AI coding agents to trade and launch on [ubi.fun](https://ubi.fun), the memecoin launchpad on Arc mainnet where creators keep up to 56% of every swap fee, 24% funds a daily USDC pool for all holders, and routing a swap earns the router 5% of its fee on-chain.
 
 Install the umbrella skill and it routes the agent to the right deeper skill:
 

@@ -1,6 +1,6 @@
 ---
 name: ubi
-description: Route to the right ubi.fun skill. ubi.fun is a memecoin launchpad on Arc mainnet (chain 5042, USDC gas) where 24% of every swap fee funds a daily USDC pool for all holders, and whoever routes a swap earns 5% of its fee on-chain.
+description: Route to the right ubi.fun skill. ubi.fun is a memecoin launchpad on Arc mainnet (chain 5042, USDC gas) where creators keep up to 56% of every swap fee, 24% funds a daily USDC pool for all holders, and whoever routes a swap earns 5% of its fee on-chain.
 ---
 
 # ubi.fun
