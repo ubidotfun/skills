@@ -9,7 +9,7 @@ Connect the MCP server first (see the `ubi` skill). Launching is two tool calls 
 
 ## Workflow
 
-1. **Metadata**: `upload_token_metadata { imageUrl | imageBase64, name, description?, website? }` pins the image and metadata and returns `{ tokenUri, image }`. Images up to 5MB.
+1. **Metadata**: `upload_token_metadata { imageUrl | imageBase64 | imageCid, name, symbol, description, website?, twitter?, telegram?, discord? }` pins the image and metadata and returns `{ tokenUri, image, imageCid }`. Images up to 5MB. Pass `imageCid` from a previous upload to reuse the image when only the metadata changes. Social links surface on the market APIs and the coin's page.
 2. **Prepare**: `prepare_launch { name, symbol, tokenUri, creator }` returns the unsigned FlaunchZap transaction. `creator` receives the revenue NFT (the claim on 56% of every swap fee) and can withdraw earnings any time. Defaults mirror the ubi.fun app: $10,000 initial market cap, 90/10 creator/floor-bid split, no fair launch. Options: `marketCapUsd` (min 10000; larger caps can require a fee, returned in `value`), `creatorFeePercent`, `fairLaunchPercent` + `fairLaunchMinutes` (anti-sniper: that share of supply sells at a fixed price for the window), `startAtUnix` for a scheduled launch (at most 30 days out).
 3. **Send**: simulate the step first; the simulated return value is the new coin's address. Sign and send with your wallet tooling, including the exact `value` from the prepared step (0 for the default market cap). Gas is USDC.
 4. **Verify**: the coin appears in `get_coins` within seconds of confirmation.
