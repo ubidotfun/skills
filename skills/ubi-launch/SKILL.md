@@ -19,11 +19,22 @@ Connect the MCP server first (see the `ubi` skill). Launching is two tool calls 
 3. **Send**: simulate the step first; the simulated return value is the new token's address. Sign and send with your wallet tooling, including the exact `value` from the prepared step (0 for the default market cap). Gas is USDC.
 4. **Verify**: the token appears in `get_coins` within seconds of confirmation.
 
+## v3 launch (paired with an asset, gold today)
+
+`prepare_launch_v3 { name, symbol, tokenUri, creator }` launches a v3 token instead: paired with a registry-approved asset rather than USDC, gold (XAUm) being the first and so far only pair (`pair` picks one once more exist), 1 billion supply, holders and the creator paid in the pair asset, traded in USDC through its route. Defaults mirror the ubi.fun app. Options:
+   - `buyFeePercent`, `sellFeePercent`: 1.5 to 5 each (default 1.5).
+   - `antiSnipeFeePercent` + `antiSnipeSeconds`: the buy fee when trading opens, falling in a straight line to the buy fee (default 10% over 300 seconds; up to 60% and 600 seconds; 0 turns it off).
+   - `largeTradeFeePercent` + `largeTradeFromUsd`: an extra fee (up to 3.5%, total at most 5%) on single trades at or above that size (default off).
+   - `buybackPercent` (0 to 83, default 10) and `holderSharePercent` (at least a sixth of the creator stream; the default is that minimum).
+   - `underwaterPercent` + `underwaterMinHolding`: a share of the vault's income that refunds holders who are under water, hourly, up to break-even (default off; minimum holding 1,000 to 5,000,000 tokens, default 10,000).
+   - `recipients`, `marketCapUsd` (min 10000; $20,000 and up pays a launch fee, returned in `value`), `startAtUnix` (at most 30 days out).
+No pre-buy through the MCP; use the ubi.fun app for one.
+
 ## What the creator gets
 
 - The launch creates a creator vault. The revenue NFT goes into it and stays there for good. The vault receives the creator side of every fee and splits it between `creator` (plus any `recipients`) and the token's holders, at the shares above.
-- The creator and recipients claim their USDC on the token's page at ubi.fun, whenever they like.
-- Fee, holder share, buyback and recipients are permanent. The only later change is the creator renouncing, which sends every future creator fee to holders.
+- The creator and recipients claim their USDC (the pair asset for v3 tokens) whenever they like: `get_coin_earnings { address }` returns what each can claim and the claim transaction to sign, or claim on the token's page at ubi.fun.
+- Fee, holder share, buyback and recipients are fixed at launch. The only later change is the creator renouncing, which sends every future creator fee to holders, and, for v3 tokens only, a community takeover of an abandoned token (only after 30 days with no claim by a current recipient), which changes who receives future creator earnings and nothing else.
 
 ## Notes
 
