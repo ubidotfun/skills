@@ -9,6 +9,7 @@ Umbrella skill. Pick the deeper skill that matches the job:
 
 - **Trade tokens, quote prices, discover markets, earn the 5% referrer share, collect dividends, creator earnings and rewards** → `ubi-trading`
 - **Launch a token (image, metadata, creator vault, one transaction), USDC-paired, or v3 paired with an asset (gold today)** → `ubi-launch`
+- **Let the agent send the transactions itself from a Circle Agent Wallet** → `ubi-circle`
 
 ## Facts that apply everywhere
 
