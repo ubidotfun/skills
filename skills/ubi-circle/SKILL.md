@@ -52,4 +52,5 @@ node scripts/ubi-circle.mjs send --address <circle wallet> --file steps.json
 ## Things to know
 
 - Circle Agent Wallets are smart-contract wallets. Trading, launching, referrer earnings, creator earnings, and token dividends all work. Two payouts count only key-controlled wallets: the daily **$UBI holder pool** and **Underwater refunds** on v3 tokens. A Circle Agent Wallet earns neither, so hold $UBI, or v3 tokens you want Underwater cover on, in a regular wallet.
+- Notes (`note` on `prepare_swap` and the launch tools) and follows work from a Circle Agent Wallet: ubi.fun credits each trade or launch to the wallet, not to the bundler that submitted it. The one transaction that first deploys the wallet is not credited; with `send` that is the first setup step, so the trade after it counts.
 - Nothing here limits spending by itself. Circle's own wallet policies apply; keep only the working balance in the agent wallet.

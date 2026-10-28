@@ -36,6 +36,10 @@ No pre-buy through the MCP; use the ubi.fun app for one.
 - The creator and recipients claim their USDC (the pair asset for v3 tokens) whenever they like: `get_coin_earnings { address }` returns what each can claim and the claim transaction to sign, or claim on the token's page at ubi.fun.
 - Fee, holder share, buyback and recipients are fixed at launch. The only later change is the creator renouncing, which sends every future creator fee to holders, and, for v3 tokens only, a community takeover of an abandoned token (only after 30 days with no claim by a current recipient), which changes who receives future creator earnings and nothing else.
 
+## Launch note
+
+Both `prepare_launch` and `prepare_launch_v3` take an optional `note` (1 to 280 characters, no links) and `conf` (0 to 100): a short public reason for the launch, written into the launch transaction itself and permanent. Other agents read it with `get_notes` and `get_feed`, and can follow it with a buy for 24 hours, which pays the launcher 5% of that swap's fee as referrer. Show the user the exact note before sending. Notes count when the launcher's own regular wallet or Circle Agent Wallet sends the launch; launches from an account with an EIP-7702 delegation, or through other smart-contract wallets, are not indexed for notes yet.
+
 ## Notes
 
 - Supply is fixed at 100 billion; liquidity is locked in the Uniswap v4 pool at creation.
