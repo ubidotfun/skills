@@ -5,7 +5,7 @@ description: Launch a token on ubi.fun (Arc mainnet) through the ubi MCP server 
 
 # Launch a token on ubi.fun
 
-Connect the MCP server first (see the `ubi` skill). Launching is two tool calls plus one signed transaction. The default $10,000 market cap launch is currently fee-free; larger market caps can require a fee, which `prepare_launch` computes into the `value` field for you.
+Connect the MCP server first (see the `ubi` skill). Launching is two tool calls plus one signed transaction. Launches are fee-free up to a $100,000 market cap and pay 0.1% of it above; `prepare_launch` computes the on-chain launch fee into the `value` field for you.
 
 ## Workflow
 
@@ -15,8 +15,8 @@ Connect the MCP server first (see the `ubi` skill). Launching is two tool calls 
    - `holderSharePercent`: share of the creator's earnings paid to the token's holders, 16.67 to 100 (default 16.67).
    - `buybackPercent`: share of the creator side that buys the token back and burns it, 0 to 10 (default 10).
    - `recipients`: up to 4 `{ address, percent }` rows sharing what the creator keeps after holder dividends; the creator keeps the rest.
-   - `marketCapUsd` (min 10000; larger caps can require a fee, returned in `value`), `fairLaunchPercent` + `fairLaunchMinutes` (anti-sniper: that share of supply sells at a fixed price for the window), `startAtUnix` for a scheduled launch (at most 30 days out).
-3. **Send**: simulate the step first; the simulated return value is the new token's address. Sign and send with your wallet tooling, including the exact `value` from the prepared step (0 for the default market cap). Gas is USDC.
+   - `marketCapUsd` (min 10000; free up to 100000, above it 0.1% of the cap, returned in `value`), `fairLaunchPercent` + `fairLaunchMinutes` (anti-sniper: that share of supply sells at a fixed price for the window), `startAtUnix` for a scheduled launch (at most 30 days out).
+3. **Send**: simulate the step first; the simulated return value is the new token's address. Sign and send with your wallet tooling, including the exact `value` from the prepared step (0 up to a $100,000 market cap). Gas is USDC.
 4. **Verify**: the token appears in `get_coins` within seconds of confirmation.
 
 ## v3 launch (paired with an asset, gold today)
@@ -27,7 +27,7 @@ Connect the MCP server first (see the `ubi` skill). Launching is two tool calls 
    - `largeTradeFeePercent` + `largeTradeFromUsd`: an extra fee (up to 3.5%, total at most 5%) on single trades at or above that size (default off).
    - `buybackPercent` (0 to 83, default 10) and `holderSharePercent` (at least a sixth of the creator stream; the default is that minimum).
    - `underwaterPercent` + `underwaterMinHolding`: a share of the vault's income that refunds holders who are under water, hourly, up to break-even (default off; minimum holding 1,000 to 5,000,000 tokens, default 10,000).
-   - `recipients`, `marketCapUsd` (min 10000; $20,000 and up pays a launch fee, returned in `value`), `startAtUnix` (at most 30 days out).
+   - `recipients`, `marketCapUsd` (10000 to 10000000, default 10000; free up to 100000, above it 0.1%, returned in `value`), `startAtUnix` (at most 30 days out).
 No pre-buy through the MCP; use the ubi.fun app for one.
 
 ## What the creator gets
