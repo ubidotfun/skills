@@ -13,7 +13,7 @@ Then prompt the agent plainly, e.g. "Use ubi: buy $25 of the top new token and s
 | Skill | What it covers |
 | --- | --- |
 | `ubi` | Chain facts, MCP connection, trust model, fees, routing |
-| `ubi-trading` | Discover, quote, swap, referrer earnings, holder income, dividends and creator earnings |
+| `ubi-trading` | Discover, quote, swap, referrer earnings, holder income, dividends and creator earnings; swaps between any Arc tokens through Kairo and Uniswap |
 | `ubi-launch` | Metadata upload and one-transaction launches with a creator vault |
 | `ubi-circle` | Send the prepared steps from a Circle Agent Wallet on Arc, so the agent trades, launches and claims itself |
 

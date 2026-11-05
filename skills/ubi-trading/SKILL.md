@@ -1,6 +1,6 @@
 ---
 name: ubi-trading
-description: Discover, quote, and trade ubi.fun tokens on Arc mainnet via the ubi MCP server, and earn 5% of the swap fee on every trade you route by setting yourself as the referrer. Use when buying or selling ubi.fun tokens, checking prices or markets, or checking referrer or holder earnings.
+description: Discover, quote, and trade ubi.fun tokens on Arc mainnet via the ubi MCP server, and earn 5% of the swap fee on every trade you route by setting yourself as the referrer. Also swaps any two Arc tokens (USDC, EURC, wETH, cirBTC, KAIRO and others) through Kairo's and Uniswap's routes. Use when buying or selling ubi.fun tokens, swapping Arc tokens, checking prices or markets, or checking referrer or holder earnings.
 ---
 
 # Trade on ubi.fun
@@ -17,6 +17,16 @@ Every quote and swap accepts `referrer`. Set it to YOUR address: 5% of the swap 
 2. **Quote**: `quote_swap { coin, side: "buy"|"sell", amount, referrer }`. Buys spend USDC, sells spend the token. The quote is net of the token's swap fee (1.25% on older tokens, 1.5% to 5% on tokens launched since October 4, 2026). v3 tokens (paired with an asset, gold today, launched since October 17, 2026) are quoted through both hops of their route, USDC to the pair asset and the pair asset to the token, at the rate of the moment: their buy or sell fee (1.5% to 5% each), any anti-snipe or large-trade fee and the gold pool's 0.05% are all included.
 3. **Execute**: `prepare_swap { coin, side, amount, slippageBps?, referrer }` returns the unsigned steps, the same shape for every token: an exact approve of the input token to Permit2 (left out when the token already allows Permit2, as ubi.fun tokens do, so sells usually skip it), the Permit2 allowance for the Universal Router, then one router transaction (the token's pool for USDC-paired tokens, both hops for v3 tokens) with the minimum output from a fresh quote less your slippage, checked on the whole fill, and a deadline 30 minutes out. Simulate each, then sign and send in order from the same wallet. Default slippage is 500 bps; tighten for large pools.
 4. **Verify**: the swap appears in `get_coin`'s 24h stats and the token's activity within seconds.
+
+## Swap any Arc token (Kairo and Uniswap)
+
+For a swap between any two Arc tokens, not only ubi.fun tokens, use the routes of the ubi.fun /swap page: Kairo (kairo.market, ubi.fun's routing partner) and Uniswap, quoted side by side.
+
+1. **Quote**: `quote_token_swap { tokenIn, tokenOut, amount, swapper?, route?, slippageBps? }`. `tokenIn` and `tokenOut` take an address or one of the symbols `USDC`, `EURC`, `WETH`, `cirBTC`, `KAIRO`, `UBI` (`get_swap_tokens` lists their addresses and decimals); any other token by address. `amount` is in tokenIn's units. `routes` lists each router's output; `route` in the answer is the one used: `best` (default) takes the higher output, Uniswap on a tie; pass `kairo` or `uniswap` for that router only (an error says when it has no route, and what the other gives).
+2. **Execute**: `prepare_token_swap { tokenIn, tokenOut, amount, swapper, route?, slippageBps? }` returns the unsigned steps: an exact approve of the input to Permit2 and the Permit2 allowance for the Universal Router, each only when missing (none when paying with USDC, which goes as the transaction's value), then one router transaction with the minimum output from a fresh quote less your slippage (default 100 bps) and a deadline 30 minutes out. Send them from `swapper`, simulating each first.
+3. Kairo finds its routes for a new pair in a few seconds; the tools wait up to about 20 seconds, and `kairoPending: true` means ask again shortly. On some routes Kairo takes its fee, 0.2% of the input, paid to Kairo in the same transaction (`kairoFeePercent`); the quoted output is already after it.
+4. The MCP checks every command of the router transaction against the swap before returning it, and sweeps back to `swapper` anything a route could leave in the router. A route that switches between v3 and v4 pools midway is refused for now; the error names the other router to try.
+5. These routes pay no referrer and carry no note. To buy or sell a ubi.fun token and earn the referrer share, use `quote_swap` and `prepare_swap` above.
 
 ## Notes and follows
 
