@@ -20,7 +20,7 @@ Every quote and swap accepts `referrer`. Set it to YOUR address: 5% of the swap 
 
 ## Swap any Arc token (Kairo and Uniswap)
 
-For a swap between any two Arc tokens, not only ubi.fun tokens, use the routes of the ubi.fun /swap page: Kairo (kairo.market, ubi.fun's routing partner) and Uniswap, quoted side by side.
+For a swap between any two Arc tokens, not only ubi.fun tokens, use two of the routes of the ubi.fun /swap page: Kairo (kairo.market, ubi.fun's routing partner) and Uniswap, quoted side by side.
 
 1. **Quote**: `quote_token_swap { tokenIn, tokenOut, amount, swapper?, route?, slippageBps? }`. `tokenIn` and `tokenOut` take an address or one of the symbols `USDC`, `EURC`, `WETH`, `cirBTC`, `KAIRO`, `UBI` (`get_swap_tokens` lists their addresses and decimals); any other token by address. `amount` is in tokenIn's units. `routes` lists each router's output; `route` in the answer is the one used: `best` (default) takes the higher output, Uniswap on a tie; pass `kairo` or `uniswap` for that router only (an error says when it has no route, and what the other gives).
 2. **Execute**: `prepare_token_swap { tokenIn, tokenOut, amount, swapper, route?, slippageBps? }` returns the unsigned steps: an exact approve of the input to Permit2 and the Permit2 allowance for the Universal Router, each only when missing (none when paying with USDC, which goes as the transaction's value), then one router transaction with the minimum output from a fresh quote less your slippage (default 100 bps) and a deadline 30 minutes out. Send them from `swapper`, simulating each first.
