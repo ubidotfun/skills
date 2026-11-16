@@ -1,0 +1,41 @@
+{
+  "name": "@ubi.fun/agent-kit",
+  "version": "0.1.0",
+  "description": "Give your AI agent a Circle Agent Wallet, an Agent ID in Arc's agent registry (ERC-8004) and the ubi.fun MCP server, in one command",
+  "license": "MIT",
+  "author": "ubi.fun",
+  "homepage": "https://ubi.fun/docs/integrate/agents",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ubidotfun/skills.git",
+    "directory": "agent-kit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ubi.fun",
+    "arc",
+    "circle",
+    "agent wallet",
+    "erc-8004",
+    "agent id",
+    "mcp",
+    "ai agent"
+  ],
+  "type": "module",
+  "bin": {
+    "agent-kit": "bin/agent-kit.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/kit.test.mjs"
+  }
+}

@@ -11,6 +11,8 @@ Why a script: the Circle CLI only takes "function signature + text arguments", w
 
 ## One-time setup (the human does this, in their own terminal)
 
+Shortcut: `npx @ubi.fun/agent-kit` runs these steps, gives the wallet an Agent ID (see the `ubi` skill) and connects ubi.fun to Claude Code, in one go. The steps by hand:
+
 ```bash
 node scripts/ubi-circle.mjs setup
 node scripts/ubi-circle.mjs circle terms show      # read them, then:
@@ -29,6 +31,7 @@ node scripts/ubi-circle.mjs wallets
    - `prepare_swap { coin, side, amount, referrer: <circle wallet> }` (the referrer earns 5% of the swap fee)
    - `prepare_launch` / `prepare_launch_v3` with `creator` set to whoever should own the creator earnings (the user's own wallet, or the Circle wallet for an agent that funds itself)
    - claims: `get_referrer_balance`, `get_coin_earnings`, `get_underwater_refunds`, `get_holder_rewards` return their claim steps
+   - an Agent ID for the Circle wallet itself: `prepare_agent_id { wallet: <circle wallet>, name, description }`, then `prepare_agent_id_update { agentId, wallet }`
 2. Show the user what will happen (amount, quote, minimum out, recipient) and get their go for anything that spends money.
 3. Save the tool result as JSON and send it:
 
