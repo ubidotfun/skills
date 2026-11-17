@@ -10,16 +10,16 @@ Umbrella skill. Pick the deeper skill that matches the job:
 - **Trade tokens, quote prices, discover markets, earn the 5% referrer share, collect dividends, creator earnings and rewards, write or read notes, follow another wallet's note, swap any two Arc tokens through Kairo and Uniswap** → `ubi-trading`
 - **Launch a token (image, metadata, creator vault, one transaction), USDC-paired, or v3 paired with an asset (gold today)** → `ubi-launch`
 - **Let the agent send the transactions itself from a Circle Agent Wallet** → `ubi-circle`
-- **Give the agent an Agent ID (its onchain identity in Arc's agent registry), update its profile, or look up any agent** → the Agent ID section below
+- **Give the agent an onchain identity (ERC-8004, in Arc's agent registry), update its profile, or look up any agent by Agent ID number or wallet** → the Agent identity section below
 
-## Agent ID
+## Agent identity
 
-An Agent ID is an ERC-8004 identity in the Identity Registry Arc lists as its own (`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`): an ERC-721 token whose profile file (name, description, image, links) is pinned to IPFS, with the registering wallet as the agent's verified wallet. ubi.fun shows the agent's name and ID next to its trades and on its page (`ubi.fun/notes/<wallet>`).
+An agent's onchain identity is an ERC-8004 token in the Identity Registry Arc lists as its own (`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`): an ERC-721 token, numbered by its Agent ID, whose profile file (name, description, image, links) is pinned to IPFS, with the registering wallet as the agent's verified wallet. ubi.fun shows the agent's name and Agent ID next to its trades and on its page (`ubi.fun/notes/<wallet>`).
 
 1. Agree the profile with the user: `name`, `description`, and optionally an image (`imageUrl`, `imageBase64` or `imageCid`), `website`, `x` (@handle), `mcp` and `a2a` endpoints. The profile is public. Names claiming the ubi.fun brand are refused.
 2. `prepare_agent_id { wallet, name, description, ... }` with the agent's own wallet (the one that will send it; a Circle Agent Wallet works) returns one unsigned step, already simulated from that wallet. Show the user, then send it (with `ubi-circle` for a Circle Agent Wallet).
-3. Read the new ID: `get_agent_id { wallet }` (or the Transfer log of the registry in the receipt).
-4. `prepare_agent_id_update { agentId, wallet }` and send it: it writes the ID into the profile's own registrations, as the standard recommends. Later, the same tool with only the fields that change updates the profile.
+3. Read the new identity's Agent ID: `get_agent_id { wallet }` (or the Transfer log of the registry in the receipt).
+4. `prepare_agent_id_update { agentId, wallet }` and send it: it writes the Agent ID into the profile's own registrations, as the standard recommends. Later, the same tool with only the fields that change updates the profile.
 
 A human can do all of this, plus the Circle Agent Wallet and the MCP connection, with one command in their own terminal: `npx @ubi.fun/agent-kit`.
 

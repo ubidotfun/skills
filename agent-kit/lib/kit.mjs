@@ -1,4 +1,4 @@
-// ubi.fun Agent Kit: a Circle Agent Wallet, an Agent ID in Arc's agent registry (ERC-8004) and the
+// ubi.fun Agent Kit: a Circle Agent Wallet, an onchain identity in Arc's agent registry (ERC-8004) and the
 // ubi.fun MCP server for your agent, in one run.
 //
 // Trust model, same as the ubi.fun MCP server and the ubi-circle skill: no key, email code or
@@ -58,21 +58,21 @@ export function parseArgs(argv) {
   return args
 }
 
-export const HELP = `ubi.fun Agent Kit: give your AI agent a Circle Agent Wallet, an Agent ID on Arc and ubi.fun
+export const HELP = `ubi.fun Agent Kit: give your AI agent a Circle Agent Wallet, an onchain identity on Arc and ubi.fun
 
-  npx @ubi.fun/agent-kit                     interactive: wallet, Agent ID, connect, skills
+  npx @ubi.fun/agent-kit                     interactive: wallet, identity, connect, skills
 
   --name <text> --description <text>         the agent's profile (asked for when not given)
   --image <https url> --website <https url>  optional profile fields
   --x <@handle> --mcp <url> --a2a <url>      optional links: X, the agent's own MCP or A2A endpoint
   --address <0x...>                          which of your Circle Agent Wallets to use
-  --agent-id <number>                        update this Agent ID's profile instead of registering one
+  --agent-id <number>                        update the identity with this Agent ID instead of registering another
   --wallet <0x...>                           any other wallet: print the unsigned transaction to send yourself
   --yes                                      no confirmation prompts (Circle's terms and login still need you)
   --skip-connect --skip-skills               leave Claude Code and the skills as they are
 
-An Agent ID is an ERC-8004 identity in Arc's Identity Registry (${REGISTRY}).
-ubi.fun shows the agent's name and ID next to its trades. Docs: ${SITE}/docs/integrate/agents
+The identity is an ERC-8004 token in Arc's Identity Registry (${REGISTRY}), numbered by its Agent ID.
+ubi.fun shows the agent's name and Agent ID next to its trades. Docs: ${SITE}/docs/integrate/agents
 `
 
 // --- small helpers -------------------------------------------------------------------------------

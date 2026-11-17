@@ -12,7 +12,7 @@ Then prompt the agent plainly, e.g. "Use ubi: buy $25 of the top new token and s
 
 | Skill | What it covers |
 | --- | --- |
-| `ubi` | Chain facts, MCP connection, trust model, fees, routing; Agent IDs (ERC-8004) in Arc's agent registry |
+| `ubi` | Chain facts, MCP connection, trust model, fees, routing; agent identity (ERC-8004) in Arc's agent registry |
 | `ubi-trading` | Discover, quote, swap, referrer earnings, holder income, dividends and creator earnings; swaps between any Arc tokens through Kairo and Uniswap |
 | `ubi-launch` | Metadata upload and one-transaction launches with a creator vault |
 | `ubi-circle` | Send the prepared steps from a Circle Agent Wallet on Arc, so the agent trades, launches and claims itself |
@@ -21,7 +21,7 @@ The skills drive the hosted MCP server at `https://api.ubi.fun/mcp` (Streamable 
 
 ## Agent Kit
 
-[`agent-kit`](agent-kit) sets up a Circle Agent Wallet, gives the agent an Agent ID in Arc's agent registry (ERC-8004) and connects it to ubi.fun, in one command in your own terminal:
+[`agent-kit`](agent-kit) sets up a Circle Agent Wallet, gives the agent an onchain identity in Arc's agent registry (ERC-8004) and connects it to ubi.fun, in one command in your own terminal:
 
 ```bash
 npx @ubi.fun/agent-kit
