@@ -1,6 +1,6 @@
 {
   "name": "@ubi.fun/agent-kit",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Give your AI agent a Circle Agent Wallet, an onchain identity in Arc's agent registry (ERC-8004) and the ubi.fun MCP server, in one command",
   "license": "MIT",
   "author": "ubi.fun",

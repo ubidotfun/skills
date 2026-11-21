@@ -42,6 +42,21 @@ node scripts/ubi-circle.mjs send --address <circle wallet> --file steps.json
 
 `send` accepts the whole `prepare_*` result, its `steps` array, or one step. For each step in order it simulates against Arc as the chain is at that moment, sends it through Circle, waits for the receipt, and stops at the first failure. Output is JSON with each step's transaction hash and an arc.etherscan.io link.
 
+## Paying for services (x402)
+
+Circle's Agent Marketplace (https://agents.circle.com/services) lists APIs that charge per call in USDC, often fractions of a cent, paid from the wallet's Circle Gateway balance with no gas per call. These are stock Circle CLI commands, run through the same pinned runtime:
+
+```bash
+node scripts/ubi-circle.mjs circle gateway deposit --amount 1 --address <circle wallet> --chain ARC --method direct
+node scripts/ubi-circle.mjs circle gateway balance --address <circle wallet> --chain ARC
+node scripts/ubi-circle.mjs circle services search "arc market"
+node scripts/ubi-circle.mjs circle services pay <url> --address <circle wallet> --chain ARC --max-amount 0.01
+```
+
+- A deposit moves the user's USDC and each paid call spends it: get the user's go first, as for a trade, and keep the Gateway balance small.
+- Always pass `--max-amount` (the most one call may cost, in USDC). `--estimate` shows the price without paying.
+- ubi.fun's paid service is the Arc market snapshot, `https://api.ubi.fun/x402/arc-market` (0.001 USDC a call, paid from a Gateway balance on Arc): the top tokens by market cap, the newest launches and the latest agent notes on Arc. The same data, quotes and trading tools are free on the ubi.fun MCP server, so pay for the snapshot only when the MCP server is not connected.
+
 ## When something goes wrong
 
 - `SIMULATION_FAILED`: the step would revert now. Nothing after it was sent. Re-quote and prepare fresh steps (quotes and deadlines go stale).

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { Readable, Writable } from 'node:stream'
 import { test } from 'node:test'
-import { agentIdFromLogs, agentIdsHeld, callTool, HELP, KitError, main, normalizeX, parseArgs, profileArgs, REGISTRY } from '../lib/kit.mjs'
+import { agentIdFromLogs, agentIdsHeld, ARC_USDC, callTool, gatewayAmount, gatewayDepositArgs, HELP, KitError, main, normalizeX, parseArgs, profileArgs, REGISTRY, usdcBalance } from '../lib/kit.mjs'
 
 const WALLET = '0x6029135d3494ec032e7726b0c78768d327a2beb8'
 const sha = (path) => createHash('sha256').update(readFileSync(new URL(path, import.meta.url))).digest('hex')
@@ -21,6 +21,28 @@ test('parseArgs reads values and switches, and refuses the rest', () => {
   assert.deepEqual(parseArgs(['--agent-id', '424080']), { agentId: '424080' })
   assert.throws(() => parseArgs(['--agent-id', '42x']), /must be a number/)
   assert.throws(() => parseArgs(['--agent-id', '1', '--wallet', WALLET]), /not with --wallet/)
+})
+
+test('--gateway takes a USDC amount for the Circle wallet only, and never with --skip-gateway', () => {
+  assert.deepEqual(parseArgs(['--gateway', '0.5']), { gateway: '0.5' })
+  assert.deepEqual(parseArgs(['--skip-gateway']), { skipGateway: true })
+  for (const bad of ['0', '-1', 'abc', '1.1234567', '1e3', '1001']) assert.throws(() => parseArgs(['--gateway', bad]), KitError)
+  assert.throws(() => parseArgs(['--gateway', '1', '--wallet', WALLET]), /not with --wallet/)
+  assert.throws(() => parseArgs(['--gateway', '1', '--skip-gateway']), /not both/)
+  assert.equal(gatewayAmount(' 2 '), '2')
+})
+
+test('usdcBalance reads Arc USDC through its ERC-20 interface and gives null when it cannot', async () => {
+  const calls = []
+  const answer = (result) => async (_url, init) => (calls.push(JSON.parse(init.body)), { json: async () => ({ jsonrpc: '2.0', id: 1, result }) })
+  assert.equal(await usdcBalance(WALLET, answer(`0x${'0'.repeat(58)}0f4240`)), 1_000_000n)
+  assert.deepEqual(calls[0].params[0], { to: ARC_USDC, data: `0x70a08231${'0'.repeat(24)}${WALLET.slice(2)}` })
+  assert.equal(await usdcBalance(WALLET, answer(undefined)), null)
+  assert.equal(await usdcBalance(WALLET, async () => { throw new Error('offline') }), null)
+})
+
+test('the Gateway deposit is the stock Circle CLI command on Arc, direct method', () => {
+  assert.deepEqual(gatewayDepositArgs('1', WALLET), ['circle', 'gateway', 'deposit', '--amount', '1', '--address', WALLET, '--chain', 'ARC', '--method', 'direct'])
 })
 
 test('agentIdsHeld reads the registry balance and refuses a malformed answer', async () => {

@@ -33,8 +33,23 @@ export class KitError extends Error {
 
 // --- arguments -----------------------------------------------------------------------------------
 
-const VALUE_FLAGS = { '--name': 'name', '--description': 'description', '--image': 'image', '--website': 'website', '--x': 'x', '--mcp': 'mcp', '--a2a': 'a2a', '--address': 'address', '--wallet': 'wallet', '--agent-id': 'agentId' }
-const BOOL_FLAGS = { '--yes': 'yes', '-y': 'yes', '--skip-connect': 'skipConnect', '--skip-skills': 'skipSkills', '--help': 'help', '-h': 'help' }
+const VALUE_FLAGS = { '--name': 'name', '--description': 'description', '--image': 'image', '--website': 'website', '--x': 'x', '--mcp': 'mcp', '--a2a': 'a2a', '--address': 'address', '--wallet': 'wallet', '--agent-id': 'agentId', '--gateway': 'gateway' }
+const BOOL_FLAGS = { '--yes': 'yes', '-y': 'yes', '--skip-connect': 'skipConnect', '--skip-skills': 'skipSkills', '--skip-gateway': 'skipGateway', '--help': 'help', '-h': 'help' }
+/** The most the kit deposits into a Gateway balance in one run; more goes through the Circle CLI directly. */
+export const GATEWAY_MAX_USDC = 1000
+
+/** A deposit amount in USDC: up to 6 decimals, above 0, at most GATEWAY_MAX_USDC. */
+export function gatewayAmount(value) {
+  const text = String(value).trim()
+  if (!/^\d+(\.\d{1,6})?$/.test(text) || Number(text) <= 0) throw new KitError('BAD_ARGUMENT', '--gateway must be a USDC amount above 0, like 1 or 0.5')
+  if (Number(text) > GATEWAY_MAX_USDC) throw new KitError('BAD_ARGUMENT', `--gateway is capped at ${GATEWAY_MAX_USDC} USDC here; deposit more with the Circle CLI`)
+  return text
+}
+
+/** Circle CLI 1.2.2: moves USDC from the agent wallet into its Gateway balance on Arc. */
+export function gatewayDepositArgs(amount, wallet) {
+  return ['circle', 'gateway', 'deposit', '--amount', amount, '--address', wallet, '--chain', 'ARC', '--method', 'direct']
+}
 
 export function parseArgs(argv) {
   const args = {}
@@ -55,6 +70,11 @@ export function parseArgs(argv) {
   }
   if (args.agentId !== undefined && !/^\d{1,30}$/.test(args.agentId)) throw new KitError('BAD_ARGUMENT', '--agent-id must be a number')
   if (args.agentId !== undefined && args.wallet) throw new KitError('BAD_ARGUMENT', '--agent-id works with a Circle Agent Wallet, not with --wallet')
+  if (args.gateway !== undefined) {
+    args.gateway = gatewayAmount(args.gateway)
+    if (args.wallet) throw new KitError('BAD_ARGUMENT', '--gateway works with a Circle Agent Wallet, not with --wallet')
+    if (args.skipGateway) throw new KitError('BAD_ARGUMENT', 'Use --gateway or --skip-gateway, not both')
+  }
   return args
 }
 
@@ -68,8 +88,11 @@ export const HELP = `ubi.fun Agent Kit: give your AI agent a Circle Agent Wallet
   --address <0x...>                          which of your Circle Agent Wallets to use
   --agent-id <number>                        update the identity with this Agent ID instead of registering another
   --wallet <0x...>                           any other wallet: print the unsigned transaction to send yourself
-  --yes                                      no confirmation prompts (Circle's terms and login still need you)
-  --skip-connect --skip-skills               leave Claude Code and the skills as they are
+  --gateway <usdc>                           also move this much USDC into the wallet's Circle Gateway balance,
+                                             to pay for services in Circle's Agent Marketplace (asked when not given)
+  --yes                                      no confirmation prompts (Circle's terms and login still need you;
+                                             --yes never moves USDC into Gateway, only --gateway does)
+  --skip-connect --skip-skills --skip-gateway  leave Claude Code, the skills and the Gateway balance as they are
 
 The identity is an ERC-8004 token in Arc's Identity Registry (${REGISTRY}), numbered by its Agent ID.
 ubi.fun shows the agent's name and Agent ID next to its trades. Docs: ${SITE}/docs/integrate/agents
@@ -107,6 +130,30 @@ export function agentIdFromLogs(logs, wallet) {
 }
 
 /** How many Agent IDs `wallet` owns (the registry's ERC-721 balanceOf), read on chain. */
+/** Arc's USDC through its ERC-20 interface (6 decimals). */
+export const ARC_USDC = '0x3600000000000000000000000000000000000000'
+
+/** The wallet's USDC on Arc in 6-decimal units, or null when the RPC cannot say. */
+export async function usdcBalance(wallet, fetchImpl = fetch) {
+  try {
+    const response = await fetchImpl(RPC_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_call',
+        params: [{ to: ARC_USDC, data: `0x70a08231${wallet.slice(2).toLowerCase().padStart(64, '0')}` }, 'latest'],
+      }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    const payload = await response.json().catch(() => null)
+    return typeof payload?.result === 'string' && /^0x[0-9a-fA-F]{1,64}$/.test(payload.result) ? BigInt(payload.result) : null
+  } catch {
+    return null
+  }
+}
+
 export async function agentIdsHeld(wallet, fetchImpl = fetch) {
   const response = await fetchImpl(RPC_URL, {
     method: 'POST',
@@ -369,6 +416,36 @@ export async function main(argv, io = { stdin: process.stdin, stdout: process.st
     say('Step 4 of 4: Skills')
     if (!args.skipSkills && (await confirm('Install the ubi.fun skills for your agent?'))) {
       await handOver(() => run(process.platform === 'win32' ? 'npx.cmd' : 'npx', SKILLS_ADD))
+    }
+    say()
+
+    // 5. Optional, after the four steps: a Gateway balance, so the agent can pay for x402 services in
+    // Circle's Agent Marketplace. It moves the user's USDC, so --yes never answers it: only --gateway
+    // <usdc> or an explicit "y" here does.
+    say('Optional: a balance for paid services')
+    say("  Circle's Agent Marketplace (agents.circle.com/services) lists APIs that charge per call in USDC, paid from the wallet's Circle Gateway balance.")
+    let deposit = args.gateway ?? null
+    // A new wallet is usually still empty here: only offer the deposit when it holds USDC
+    const held = deposit || args.skipGateway || !rl ? null : await usdcBalance(wallet)
+    if (held === 0n) say('  The wallet has no USDC on Arc yet; fund it first (see below).')
+    if (!deposit && !args.skipGateway && rl && held !== 0n) {
+      const wants = (await rl.question('Move USDC from this wallet into its Gateway balance now? [y/N] ')).trim().toLowerCase().startsWith('y')
+      if (wants) {
+        // The identity is done by now: a mistyped amount skips this step instead of failing the run
+        try {
+          deposit = gatewayAmount(await ask('How much USDC? [1] ', '1'))
+        } catch {
+          say('  That is not a USDC amount (like 1 or 0.5).')
+        }
+      }
+    }
+    // The pinned CLI keeps its session in ~/.ubi-circle, so the later route is the ubi-circle skill, not a bare CLI
+    const later = 'ask your agent "Use ubi-circle: move 1 USDC into my Gateway balance"'
+    if (deposit) {
+      const result = await handOver(() => ubiCircle(gatewayDepositArgs(deposit, wallet), { inherit: true }))
+      say(result.code === 0 ? `  Moved ${deposit} USDC into the Gateway balance` : `  The deposit did not finish (the wallet needs that much USDC plus a little for gas). Later: ${later}`)
+    } else {
+      say(`  Skipped. Later: ${later}`)
     }
     say()
     say(`Done. ${profile.name} is Agent ID #${agentId} on Arc.`)

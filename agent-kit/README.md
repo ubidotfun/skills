@@ -11,6 +11,8 @@ npx @ubi.fun/agent-kit
 3. **Connect.** Adds the ubi.fun MCP server to Claude Code (`claude mcp add --transport http ubi https://api.ubi.fun/mcp`). Other apps take `https://api.ubi.fun/mcp` as a remote MCP server; it is also listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `fun.ubi/mcp`.
 4. **Skills.** Installs the ubi.fun skills (`npx skills add ubidotfun/skills --skill '*'`).
 
+Then, optionally, **a balance for paid services**: the kit can move USDC you choose from the agent wallet into its Circle Gateway balance (`circle gateway deposit ... --chain ARC --method direct`), so the agent can pay for APIs in [Circle's Agent Marketplace](https://agents.circle.com/services), per call and without gas. It asks first, defaults to no, and `--yes` never answers it for you.
+
 Arc gas is paid in USDC. Every transaction is simulated before Circle sends it, and the kit asks before each one.
 
 ## Options
@@ -22,8 +24,11 @@ Arc gas is paid in USDC. Every transaction is simulated before Circle sends it, 
 --address <0x...>                          which of your Circle Agent Wallets to use
 --agent-id <number>                        update the identity with this Agent ID instead of registering another
 --wallet <0x...>                           any other wallet: print the unsigned transaction to send yourself
---yes                                      no confirmation prompts (Circle's terms and login still need you)
---skip-connect --skip-skills               leave Claude Code and the skills as they are
+--gateway <usdc>                           also move this much USDC into the wallet's Circle Gateway balance,
+                                           to pay for services in Circle's Agent Marketplace (asked when not given)
+--yes                                      no confirmation prompts (Circle's terms and login still need you;
+                                           --yes never moves USDC into Gateway, only --gateway does)
+--skip-connect --skip-skills --skip-gateway  leave Claude Code, the skills and the Gateway balance as they are
 ```
 
 A wallet that already has an onchain identity gets its profile updated instead of a second one (you are asked first). The kit never registers when it cannot tell: if the lookup fails, or the wallet holds an identity ubi.fun has not indexed yet, it stops without sending anything. If a run stops after the registration landed, it prints the `--agent-id` command that finishes the profile.
