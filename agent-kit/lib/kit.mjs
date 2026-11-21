@@ -37,11 +37,14 @@ const VALUE_FLAGS = { '--name': 'name', '--description': 'description', '--image
 const BOOL_FLAGS = { '--yes': 'yes', '-y': 'yes', '--skip-connect': 'skipConnect', '--skip-skills': 'skipSkills', '--skip-gateway': 'skipGateway', '--help': 'help', '-h': 'help' }
 /** The most the kit deposits into a Gateway balance in one run; more goes through the Circle CLI directly. */
 export const GATEWAY_MAX_USDC = 1000
+/** Circle CLI 1.2.2 refuses a Gateway deposit below 0.5 USDC (MIN_GATEWAY_DEPOSIT_USDC). */
+export const GATEWAY_MIN_USDC = 0.5
+const GATEWAY_MIN_UNITS = 500_000n
 
-/** A deposit amount in USDC: up to 6 decimals, above 0, at most GATEWAY_MAX_USDC. */
+/** A deposit amount in USDC: up to 6 decimals, at least GATEWAY_MIN_USDC, at most GATEWAY_MAX_USDC. */
 export function gatewayAmount(value) {
   const text = String(value).trim()
-  if (!/^\d+(\.\d{1,6})?$/.test(text) || Number(text) <= 0) throw new KitError('BAD_ARGUMENT', '--gateway must be a USDC amount above 0, like 1 or 0.5')
+  if (!/^\d+(\.\d{1,6})?$/.test(text) || Number(text) < GATEWAY_MIN_USDC) throw new KitError('BAD_ARGUMENT', `--gateway must be a USDC amount of at least ${GATEWAY_MIN_USDC} (Circle's minimum deposit), like 1`)
   if (Number(text) > GATEWAY_MAX_USDC) throw new KitError('BAD_ARGUMENT', `--gateway is capped at ${GATEWAY_MAX_USDC} USDC here; deposit more with the Circle CLI`)
   return text
 }
@@ -88,8 +91,8 @@ export const HELP = `ubi.fun Agent Kit: give your AI agent a Circle Agent Wallet
   --address <0x...>                          which of your Circle Agent Wallets to use
   --agent-id <number>                        update the identity with this Agent ID instead of registering another
   --wallet <0x...>                           any other wallet: print the unsigned transaction to send yourself
-  --gateway <usdc>                           also move this much USDC into the wallet's Circle Gateway balance,
-                                             to pay for services in Circle's Agent Marketplace (asked when not given)
+  --gateway <usdc>                           also move this much USDC (at least 0.5) into the wallet's Circle Gateway
+                                             balance, to pay for services in Circle's Agent Marketplace (asked when not given)
   --yes                                      no confirmation prompts (Circle's terms and login still need you;
                                              --yes never moves USDC into Gateway, only --gateway does)
   --skip-connect --skip-skills --skip-gateway  leave Claude Code, the skills and the Gateway balance as they are
@@ -424,21 +427,7 @@ export async function main(argv, io = { stdin: process.stdin, stdout: process.st
     // <usdc> or an explicit "y" here does.
     say('Optional: a balance for paid services')
     say("  Circle's Agent Marketplace (agents.circle.com/services) lists APIs that charge per call in USDC, paid from the wallet's Circle Gateway balance.")
-    let deposit = args.gateway ?? null
-    // A new wallet is usually still empty here: only offer the deposit when it holds USDC
-    const held = deposit || args.skipGateway || !rl ? null : await usdcBalance(wallet)
-    if (held === 0n) say('  The wallet has no USDC on Arc yet; fund it first (see below).')
-    if (!deposit && !args.skipGateway && rl && held !== 0n) {
-      const wants = (await rl.question('Move USDC from this wallet into its Gateway balance now? [y/N] ')).trim().toLowerCase().startsWith('y')
-      if (wants) {
-        // The identity is done by now: a mistyped amount skips this step instead of failing the run
-        try {
-          deposit = gatewayAmount(await ask('How much USDC? [1] ', '1'))
-        } catch {
-          say('  That is not a USDC amount (like 1 or 0.5).')
-        }
-      }
-    }
+    const deposit = await chooseGatewayDeposit({ args, rl, wallet, say })
     // The pinned CLI keeps its session in ~/.ubi-circle, so the later route is the ubi-circle skill, not a bare CLI
     const later = 'ask your agent "Use ubi-circle: move 1 USDC into my Gateway balance"'
     if (deposit) {
@@ -454,6 +443,36 @@ export async function main(argv, io = { stdin: process.stdin, stdout: process.st
     say('  Try: "Use ubi-circle: buy $5 of $UBI from my Circle wallet"')
   } finally {
     rl?.close()
+  }
+}
+
+/**
+ * How much USDC to move into the Gateway balance, or null for none. Only --gateway or the user's own
+ * "y" plus a typed amount says yes (--yes never does). A new wallet is usually still empty here, so
+ * the question comes only when the wallet is known to hold Circle's minimum deposit; an unreadable
+ * balance asks nothing.
+ */
+export async function chooseGatewayDeposit({ args, rl, wallet, say, balanceOf = usdcBalance }) {
+  if (args.gateway) return args.gateway
+  if (args.skipGateway || !rl) return null
+  const held = await balanceOf(wallet)
+  if (held === null) {
+    say("  Couldn't read the wallet's USDC balance on Arc just now.")
+    return null
+  }
+  if (held < GATEWAY_MIN_UNITS) {
+    say(`  The wallet holds less than ${GATEWAY_MIN_USDC} USDC on Arc (Circle's minimum deposit); fund it first (see below).`)
+    return null
+  }
+  const wants = (await rl.question('Move USDC from this wallet into its Gateway balance now? [y/N] ')).trim().toLowerCase().startsWith('y')
+  if (!wants) return null
+  // No default amount: the user types it. The identity is done by now, so an empty or mistyped
+  // amount skips this step instead of failing the run.
+  try {
+    return gatewayAmount((await rl.question(`How much USDC? (at least ${GATEWAY_MIN_USDC}) `)).trim())
+  } catch {
+    say(`  That is not a USDC amount of at least ${GATEWAY_MIN_USDC} (like 1).`)
+    return null
   }
 }
 

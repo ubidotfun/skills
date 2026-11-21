@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { Readable, Writable } from 'node:stream'
 import { test } from 'node:test'
-import { agentIdFromLogs, agentIdsHeld, ARC_USDC, callTool, gatewayAmount, gatewayDepositArgs, HELP, KitError, main, normalizeX, parseArgs, profileArgs, REGISTRY, usdcBalance } from '../lib/kit.mjs'
+import { agentIdFromLogs, agentIdsHeld, ARC_USDC, callTool, chooseGatewayDeposit, gatewayAmount, gatewayDepositArgs, HELP, KitError, main, normalizeX, parseArgs, profileArgs, REGISTRY, usdcBalance } from '../lib/kit.mjs'
 
 const WALLET = '0x6029135d3494ec032e7726b0c78768d327a2beb8'
 const sha = (path) => createHash('sha256').update(readFileSync(new URL(path, import.meta.url))).digest('hex')
@@ -26,7 +26,8 @@ test('parseArgs reads values and switches, and refuses the rest', () => {
 test('--gateway takes a USDC amount for the Circle wallet only, and never with --skip-gateway', () => {
   assert.deepEqual(parseArgs(['--gateway', '0.5']), { gateway: '0.5' })
   assert.deepEqual(parseArgs(['--skip-gateway']), { skipGateway: true })
-  for (const bad of ['0', '-1', 'abc', '1.1234567', '1e3', '1001']) assert.throws(() => parseArgs(['--gateway', bad]), KitError)
+  // 0.5 is Circle CLI 1.2.2's minimum Gateway deposit: anything below would fail after the four steps
+  for (const bad of ['0', '-1', 'abc', '1.1234567', '1e3', '1001', '0.1', '0.499999']) assert.throws(() => parseArgs(['--gateway', bad]), KitError)
   assert.throws(() => parseArgs(['--gateway', '1', '--wallet', WALLET]), /not with --wallet/)
   assert.throws(() => parseArgs(['--gateway', '1', '--skip-gateway']), /not both/)
   assert.equal(gatewayAmount(' 2 '), '2')
@@ -39,6 +40,33 @@ test('usdcBalance reads Arc USDC through its ERC-20 interface and gives null whe
   assert.deepEqual(calls[0].params[0], { to: ARC_USDC, data: `0x70a08231${'0'.repeat(24)}${WALLET.slice(2)}` })
   assert.equal(await usdcBalance(WALLET, answer(undefined)), null)
   assert.equal(await usdcBalance(WALLET, async () => { throw new Error('offline') }), null)
+})
+
+test('the Gateway deposit happens only on --gateway or a typed amount after "y", never by default', async () => {
+  const ask = (...answers) => {
+    const asked = []
+    return { asked, rl: { question: async (q) => (asked.push(q), answers.shift() ?? '') } }
+  }
+  const said = []
+  const say = (line) => said.push(line)
+  const has = (units) => async () => units
+  const choose = (args, rl, balanceOf) => chooseGatewayDeposit({ args, rl, wallet: WALLET, say, balanceOf })
+
+  assert.equal(await choose({ gateway: '2' }, null, has(0n)), '2')
+  assert.equal(await choose({ skipGateway: true }, ask('y', '5').rl, has(9_000_000n)), null)
+  assert.equal(await choose({ yes: true }, null, has(9_000_000n)), null)
+  // An unreadable or too-small balance asks nothing
+  for (const balance of [null, 0n, 499_999n]) {
+    const t = ask('y', '1')
+    assert.equal(await choose({}, t.rl, has(balance)), null)
+    assert.equal(t.asked.length, 0)
+  }
+  assert.equal(await choose({}, ask('', '1').rl, has(9_000_000n)), null)
+  assert.equal(await choose({}, ask('n', '1').rl, has(9_000_000n)), null)
+  // "y" then Enter: no default amount
+  assert.equal(await choose({}, ask('y', '').rl, has(9_000_000n)), null)
+  assert.equal(await choose({}, ask('y', '0.1').rl, has(9_000_000n)), null)
+  assert.equal(await choose({ yes: true }, ask('y', '2.5').rl, has(9_000_000n)), '2.5')
 })
 
 test('the Gateway deposit is the stock Circle CLI command on Arc, direct method', () => {

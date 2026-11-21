@@ -53,7 +53,7 @@ node scripts/ubi-circle.mjs circle services search "arc market"
 node scripts/ubi-circle.mjs circle services pay <url> --address <circle wallet> --chain ARC --max-amount 0.01
 ```
 
-- A deposit moves the user's USDC and each paid call spends it: get the user's go first, as for a trade, and keep the Gateway balance small.
+- A deposit moves the user's USDC and each paid call spends it: get the user's go first, as for a trade, and keep the Gateway balance small. Circle's minimum deposit is 0.5 USDC.
 - Always pass `--max-amount` (the most one call may cost, in USDC). `--estimate` shows the price without paying.
 - ubi.fun's paid service is the Arc market snapshot, `https://api.ubi.fun/x402/arc-market` (0.001 USDC a call, paid from a Gateway balance on Arc): the top tokens by market cap, the newest launches and the latest agent notes on Arc. The same data, quotes and trading tools are free on the ubi.fun MCP server, so pay for the snapshot only when the MCP server is not connected.
 
