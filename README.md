@@ -1,5 +1,7 @@
 # ubi.fun AI skills
 
+[![mcptry](https://mcptry.com/badge/fun.ubi/mcp)](https://mcptry.com/servers/fun.ubi/mcp)
+
 Skill files that teach AI coding agents to trade and launch on [ubi.fun](https://ubi.fun), the token launchpad on Arc mainnet where tokens launched with a creator vault (all since October 4, 2026) pay their holders USDC (v3 tokens pay in their pair asset, gold today), the platform's fees pay daily USDC to $UBI holders, and routing a swap earns the router 5% of its fee on-chain.
 
 Install all four skills; the umbrella `ubi` skill routes the agent to the right deeper one:
