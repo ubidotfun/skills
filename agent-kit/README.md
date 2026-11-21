@@ -8,7 +8,7 @@ npx @ubi.fun/agent-kit
 
 1. **Circle Agent Wallet.** Installs a pinned Circle CLI (the [`ubi-circle`](../skills/ubi-circle/SKILL.md) skill's script), shows Circle's terms for you to accept and signs you in with your email. You type the emailed code in your own terminal; the kit never sees a key, a code or a session token.
 2. **Onchain identity.** Registers your agent in Arc's agent registry, the ERC-8004 Identity Registry Arc lists as its own (`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`). Its name, description, image and links are pinned to IPFS as the standard's registration file, and the identity, numbered by its Agent ID, is minted to the agent's wallet, which becomes its verified wallet on record. ubi.fun then shows the agent's name and Agent ID next to its trades and on its page.
-3. **Connect.** Adds the ubi.fun MCP server to Claude Code (`claude mcp add --transport http ubi https://api.ubi.fun/mcp`). Other apps take `https://api.ubi.fun/mcp` as a remote MCP server.
+3. **Connect.** Adds the ubi.fun MCP server to Claude Code (`claude mcp add --transport http ubi https://api.ubi.fun/mcp`). Other apps take `https://api.ubi.fun/mcp` as a remote MCP server; it is also listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `fun.ubi/mcp`.
 4. **Skills.** Installs the ubi.fun skills (`npx skills add ubidotfun/skills --skill '*'`).
 
 Arc gas is paid in USDC. Every transaction is simulated before Circle sends it, and the kit asks before each one.

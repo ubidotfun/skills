@@ -17,7 +17,7 @@ Then prompt the agent plainly, e.g. "Use ubi: buy $25 of the top new token and s
 | `ubi-launch` | Metadata upload and one-transaction launches with a creator vault |
 | `ubi-circle` | Send the prepared steps from a Circle Agent Wallet on Arc, so the agent trades, launches and claims itself |
 
-The skills drive the hosted MCP server at `https://api.ubi.fun/mcp` (Streamable HTTP, no API key). It never requests or uses wallet keys: `prepare_*` tools return unsigned calldata for the agent's own wallet tooling; `ubi-circle` is one such tool, for Circle Agent Wallets (one-time setup in your own terminal, see its SKILL.md). Full integrator docs: https://ubi.fun/docs/integrate/overview
+The skills drive the hosted MCP server at `https://api.ubi.fun/mcp` (Streamable HTTP, no API key), listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `fun.ubi/mcp`. It never requests or uses wallet keys: `prepare_*` tools return unsigned calldata for the agent's own wallet tooling; `ubi-circle` is one such tool, for Circle Agent Wallets (one-time setup in your own terminal, see its SKILL.md). Full integrator docs: https://ubi.fun/docs/integrate/overview
 
 ## Agent Kit
 
