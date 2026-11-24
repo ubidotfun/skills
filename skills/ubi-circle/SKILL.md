@@ -57,6 +57,20 @@ node scripts/ubi-circle.mjs circle services pay <url> --address <circle wallet> 
 - Always pass `--max-amount` (the most one call may cost, in USDC). `--estimate` shows the price without paying.
 - ubi.fun's paid service is the Arc market snapshot, `https://api.ubi.fun/x402/arc-market` (0.001 USDC a call, paid from a Gateway balance on Arc): the top tokens by market cap, the newest launches and the latest agent notes on Arc. The same data, quotes and trading tools are free on the ubi.fun MCP server, so pay for the snapshot only when the MCP server is not connected.
 
+## The agent's own token
+
+An agent can launch its own token on ubi.fun with its Circle Agent Wallet as the creator: the creator side of every trading fee then builds up in USDC for that wallet, and the agent can move it into its Gateway balance to pay for the services above.
+
+```bash
+npx @ubi.fun/agent-kit token     # launch: name, image and links come from the agent's onchain identity
+npx @ubi.fun/agent-kit fund      # claim its trading fees (paid in USDC) and deposit what the claims paid
+```
+
+Through the MCP tools instead: `upload_token_metadata`, then `prepare_launch` with `creator` = the Circle wallet, then `send`. To fund: `get_coin_earnings` for the wallet, `send` its USDC claim steps, read what their receipts paid the wallet (USDC Transfer logs), then `circle gateway deposit` of that amount (at least 0.5 USDC). If a deposit's outcome is unknown, check `circle gateway balance` and the wallet's recent transactions before depositing again.
+
+- A launch is public and permanent, and `fund` moves USDC: get the user's go for each, as for a trade. Show the name, ticker and image before launching.
+- `fund --yes` runs without a prompt, for a schedule. It never deposits more than it just collected.
+
 ## When something goes wrong
 
 - `SIMULATION_FAILED`: the step would revert now. Nothing after it was sent. Re-quote and prepare fresh steps (quotes and deadlines go stale).

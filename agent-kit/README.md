@@ -15,6 +15,19 @@ Then, optionally, **a balance for paid services**: the kit can move USDC you cho
 
 Arc gas is paid in USDC. Every transaction is simulated before Circle sends it, and the kit asks before each one.
 
+## A token for your agent
+
+```bash
+npx @ubi.fun/agent-kit token     # launch the agent's own token on ubi.fun
+npx @ubi.fun/agent-kit fund      # move what it earned into its Gateway balance
+```
+
+`token` launches a token from the agent's Circle Agent Wallet, with the wallet as its creator. Name, description, image and links come from the agent's onchain identity unless you pass `--name`, `--description` or `--image`; the ticker is asked for (`--symbol`). The launch uses ubi.fun's defaults (1.5% trading fee, a sixth of the creator side to the token's holders, 10% buyback), and the creator side of every trading fee builds up in USDC for the agent's wallet. A launch is public and permanent: the prompt defaults to no, and `--yes` launches without asking.
+
+`fund` claims the wallet's trading fees on ubi.fun, paid in USDC (creator earnings and holder dividends of USDC-paired tokens, and creator revenue of older tokens), and moves what those claims paid, read from their receipts, into the wallet's Circle Gateway balance, so the agent's trading fees pay for its API calls. It waits until there is at least 0.5 USDC to claim (Circle's minimum deposit), never moves the wallet's other USDC, and builds the claim transactions itself from what the MCP server reports. It checks the tokens the wallet holds or launched, up to 50; `--coins` names others. If a deposit does not confirm, the run says so: it may still land, so check both the Gateway balance and the wallet's recent transactions before moving that USDC again. A later run never deposits it again. If one claim fails, the ones that landed before it are still deposited and the failure is reported. Whenever a claim fails or USDC it claimed is left in the wallet undeposited, `fund` exits with an error, so a scheduled run shows it. `fund --yes` runs without a prompt, for a schedule (cron) once the Circle session is set up.
+
+Both need a Circle session from the setup run above, and `token` needs the agent's onchain identity.
+
 ## Options
 
 ```text
@@ -29,6 +42,9 @@ Arc gas is paid in USDC. Every transaction is simulated before Circle sends it, 
 --yes                                      no confirmation prompts (Circle's terms and login still need you;
                                            --yes never moves USDC into Gateway, only --gateway does)
 --skip-connect --skip-skills --skip-gateway  leave Claude Code, the skills and the Gateway balance as they are
+
+token  --symbol <ticker> --name <text> --description <text> --image <https url> --address <0x...> --yes
+fund   --address <0x...> --coins <0x...,0x...> --yes
 ```
 
 A wallet that already has an onchain identity gets its profile updated instead of a second one (you are asked first). The kit never registers when it cannot tell: if the lookup fails, or the wallet holds an identity ubi.fun has not indexed yet, it stops without sending anything. If a run stops after the registration landed, it prints the `--agent-id` command that finishes the profile.
